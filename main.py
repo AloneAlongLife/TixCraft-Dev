@@ -7,13 +7,16 @@ from cv2 import imdecode, IMREAD_COLOR, cvtColor, COLOR_BGR2GRAY, INTER_NEAREST,
 from threading import Thread, Lock
 from webbrowser import get as w_get
 from queue import Queue
+from os.path import isfile
+from os import get_terminal_size
 
 def print_vcode(_sen: Session):
     def longer(inp: list):
         return inp + [" " * 75] * (max_h - len(inp))
+    wid = get_terminal_size().columns // 76
     for _ in range(3):
         out = []
-        for _ in range(3):
+        for _ in range(wid):
             img = imdecode(frombuffer(_sen.get("https://tixcraft.com/ticket/captcha").content, uint8), IMREAD_COLOR)
             img = resize(cvtColor(img, COLOR_BGR2GRAY), (75, 40), interpolation=INTER_NEAREST)
 
@@ -37,7 +40,15 @@ if not URL: URL = "https://tixcraft.com/activity/game/23_ssf4"
 # URL = "https://tixcraft.com/activity/game/23_wbc"
 elif URL == "test": URL = "https://tixcraft.com/activity/game/23_goodband"
 
-SID = input("SID :")
+if "https://tixcraft.com/activity/game/" not in URL:
+    URL = f"https://tixcraft.com/activity/game/{URL.split('/')[-1]}"
+
+if isfile("SID.txt"):
+    SID = open("SID.txt", mode="r").read()
+    print(f"自動讀取上次的SID: {SID}")
+else:
+    SID = input("SID :")
+    open("SID.txt", mode="w").write(SID)
 # if not SID: SID = "tr1ofvg0fmjrrsanm8nref8jda"
 
 try: TICKS = int(input("Ticket Count :"))
