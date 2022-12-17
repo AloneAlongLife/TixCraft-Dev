@@ -2,51 +2,105 @@ from bs4 import BeautifulSoup, Tag
 from requests import session, Session
 from orjson import loads, JSONDecodeError
 from time import time, sleep
-from numpy import frombuffer, uint8
+from numpy import frombuffer, uint8, full
 from cv2 import imdecode, IMREAD_COLOR, cvtColor, COLOR_BGR2GRAY, INTER_NEAREST, resize
-from threading import Thread
+from threading import Thread, Lock
+from webbrowser import get as w_get
+from queue import Queue
 
 def print_vcode(_sen: Session):
+    def longer(inp: list):
+        return inp + [" " * 75] * (max_h - len(inp))
     for _ in range(3):
         out = []
         for _ in range(3):
             img = imdecode(frombuffer(_sen.get("https://tixcraft.com/ticket/captcha").content, uint8), IMREAD_COLOR)
-            img = cvtColor(img, COLOR_BGR2GRAY)
-            img = resize(img, (75, 60), interpolation=INTER_NEAREST)
+            img = resize(cvtColor(img, COLOR_BGR2GRAY), (75, 40), interpolation=INTER_NEAREST)
 
-            img[img < 250] = 0
-            temp = img.astype("U2")
-            temp[temp == "0"] = " "
-            temp[temp != " "] = "#"
-            temp = [l for l in temp.tolist() if "#" in l]
+            temp = full(img.shape, " ")
+            temp[img > 250] = "#"
+            temp = [k for k in map("".join, temp.tolist()) if "#" in k]
             out.append(temp)
-        _p = "\n".join(map(lambda x: "|".join(map(lambda y: "".join(y), x)), zip(out[0], out[1], out[2])))
+        max_h = max(map(len, out))
+        out = tuple(map(longer, out))
+        _p = "\n".join(map("|".join, zip(*out)))
         print(_p)
         print("-" * 228)
+
+PRINT_QUEUE: Queue = Queue()
+STARTED = False
+STARTED_LOCK = Lock()
+SLEEP_TIME = 0
 
 URL = input("URL :")
 if not URL: URL = "https://tixcraft.com/activity/game/23_ssf4"
 # URL = "https://tixcraft.com/activity/game/23_wbc"
 elif URL == "test": URL = "https://tixcraft.com/activity/game/23_goodband"
 
-SID = input("SID: ")
+SID = input("SID :")
 if not SID: SID = "tr1ofvg0fmjrrsanm8nref8jda"
 
-try: TICKS = int(input("Ticket Count: "))
+try: TICKS = int(input("Ticket Count :"))
 except: TICKS = 1
 
 sen = session()
 sen.cookies.set("SID", SID)
 
 timer = time()
-while not (game_tag := (game_page := BeautifulSoup((r := sen.get(URL)).content, features="html.parser")).select_one("#gameList input")):
-    print(f"\r{game_page.select_one('h2.activity-title').text} 尚未開賣 {r.status_code} {format(time() - timer, '.2f')}s", end="")
+game_tag = None
+def refresh_job():
+    global game_tag, STARTED
+    while not STARTED:
+        if gt := (game_page := BeautifulSoup((r := sen.get(URL)).content, features="html.parser")).select_one("#gameList input"):
+            STARTED_LOCK.acquire()
+            if STARTED:
+                STARTED_LOCK.release()
+                return
+            STARTED = True
+            game_tag = gt
+            STARTED_LOCK.release()
+            return
+        if STARTED: return
+        try: PRINT_QUEUE.put(f"\r{game_page.select_one('h2.activity-title').text} 尚未開賣 {r.status_code} {format(time() - timer, '.2f')}s")
+        except: PRINT_QUEUE.put(f"\rERROR {r.status_code} {format(time() - timer, '.2f')}s")
+        sleep(SLEEP_TIME)
+        if STARTED: return
+
+try:
+    for _ in range(1): Thread(target=refresh_job).start()
+    _get_i = 0
+    _timer_offset = timer
+    while not STARTED:
+        if PRINT_QUEUE.empty():
+            sleep(0.001)
+            continue
+        _get_i += 1
+        _rate = _get_i / max(0.001, time() - _timer_offset)
+        if time() - _timer_offset > 2:
+            # SLEEP_TIME = max(0, SLEEP_TIME + 0.01 * (_rate - 8))
+            _get_i, _timer_offset = 0, time()
+        print(f"{PRINT_QUEUE.get()} {format(_rate, '.2f')}r/s", end="")
+except Exception as e:
+    STARTED = True
+    raise e
+
+# _get_i = 0
+# while not (game_tag := (game_page := BeautifulSoup((r := sen.get(URL)).content, features="html.parser")).select_one("#gameList input")):
+#     _get_i += 1
+#     try:
+#         print(f"\r{game_page.select_one('h2.activity-title').text} 尚未開賣 {r.status_code} {format(time() - timer, '.2f')}s {format(_get_i / (time() - timer), '.2f')}r/s", end="")
+#     except:
+#         print(f"\r尚未開賣 {r.status_code} {format(time() - timer, '.2f')}s {format(_get_i / (time() - timer), '.2f')}r/s", end="")
 
 timer = time()
 print("timer_start")
-
-games: BeautifulSoup = BeautifulSoup(sen.get(f"https://tixcraft.com{game_tag['data-href']}").content, features="html.parser")
-url_data = loads(games.decode().split("var areaUrlList = ")[1].split(";")[0].replace("\\", ""))
+while True:
+    games: BeautifulSoup = BeautifulSoup(sen.get(f"https://tixcraft.com{game_tag['data-href']}").content, features="html.parser")
+    try:
+        url_data = loads(games.decode().split("var areaUrlList = ")[1].split(";")[0].replace("\\", ""))
+        break
+    except:
+        continue
 
 while True:
     a_tag = games.select_one("div.zone.area-list a")
@@ -59,6 +113,7 @@ while True:
 
     form: Tag = order_page.select_one("form")
     agree = "TicketForm[agree]" + order_page.decode().split('\"name\", \"TicketForm[agree]')[1].split('\");')[0]
+    
 
     form_data = {
         "CSRFTOKEN": form.select_one("#CSRFTOKEN")["value"],
@@ -74,7 +129,7 @@ while True:
         form_data[pic["name"]] = pic["value"]
 
     # open("out.png", mode="wb").write(sen.get("https://tixcraft.com/ticket/captcha").content)
-    form_data["TicketForm[verifyCode]"] = input("verifyCode:")
+    form_data["TicketForm[verifyCode]"] = input("verifyCode:\n")
 
     sen.post(order_url, data=form_data)
     check_res = sen.get("https://tixcraft.com/ticket/check")
@@ -88,8 +143,11 @@ while True:
         continue
     print(check_data["message"])
     if check_data["waiting"]:
-        # sleep(check_data["time"])
-        print("搶票成功 請前往該帳號訂單查看: https://tixcraft.com/ticket/checkout")
+        for i in range(check_data["time"]):
+            print(f"\r搶票成功 請等待{check_data['time'] - i}秒...", end="")
+            sleep(1)
+        print("\r搶票成功 請等待0秒... 請前往該帳號訂單查看: https://tixcraft.com/ticket/checkout")
+        w_get("windows-default").open("https://tixcraft.com/ticket/checkout")
         break
     else:
         print(check_res.content)

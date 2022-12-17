@@ -1,3 +1,5 @@
 beautifulsoup4
 requests
 orjson
+opencv-python
+pyinstaller
