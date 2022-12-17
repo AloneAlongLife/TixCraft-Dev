@@ -38,7 +38,7 @@ if not URL: URL = "https://tixcraft.com/activity/game/23_ssf4"
 elif URL == "test": URL = "https://tixcraft.com/activity/game/23_goodband"
 
 SID = input("SID :")
-if not SID: SID = "tr1ofvg0fmjrrsanm8nref8jda"
+# if not SID: SID = "tr1ofvg0fmjrrsanm8nref8jda"
 
 try: TICKS = int(input("Ticket Count :"))
 except: TICKS = 1
@@ -129,7 +129,8 @@ while True:
         form_data[pic["name"]] = pic["value"]
 
     # open("out.png", mode="wb").write(sen.get("https://tixcraft.com/ticket/captcha").content)
-    form_data["TicketForm[verifyCode]"] = input("verifyCode:\n")
+    while len(vcode := input("verifyCode:\n")) != 4: print("驗證碼長度錯誤，請重新輸入!")
+    form_data["TicketForm[verifyCode]"] = vcode
 
     sen.post(order_url, data=form_data)
     check_res = sen.get("https://tixcraft.com/ticket/check")
@@ -143,10 +144,11 @@ while True:
         continue
     print(check_data["message"])
     if check_data["waiting"]:
-        for i in range(check_data["time"]):
-            print(f"\r搶票成功 請等待{check_data['time'] - i}秒...", end="")
-            sleep(1)
-        print("\r搶票成功 請等待0秒... 請前往該帳號訂單查看: https://tixcraft.com/ticket/checkout")
+        # for i in range(check_data["time"]):
+        #     print(f"\r搶票成功 請等待{check_data['time'] - i}秒...", end="")
+        #     sleep(1)
+        # print("\r搶票成功 請等待0秒... 請前往該帳號訂單查看: https://tixcraft.com/ticket/checkout")
+        print("搶票成功 請前往該帳號訂單查看: https://tixcraft.com/ticket/checkout")
         w_get("windows-default").open("https://tixcraft.com/ticket/checkout")
         break
     else:
