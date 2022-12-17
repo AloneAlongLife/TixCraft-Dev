@@ -49,3 +49,16 @@ Ticket Count :
 2.請不要多個程式使用同一支帳號的SID，SID並不是不同就代表不同帳號，一個帳號會有多個不同的SID，建議在搶票前半小時登入取得，並且不要按登出，否則可能會導致SID失效。
 3.在搶票開始前請確保你的輸入法是英文輸入法，避免在驗證碼延宕太多時間，不管是哪一種機器人幾乎無法通過圖形驗證，代表如果驗證碼打得越快，搶到票的機率就越高。
 4.程式運行時建議使用全螢幕，這樣在看驗證碼比較方便。
+5.請確保在[訂單頁面](https://tixcraft.com/order)沒有未完成的訂單，如果有請先取消或者進行付款，只要有選擇付款方式並送出即可，不一定要完成繳費。也可直接檢查[結帳頁面](https://tixcraft.com/ticket/checkout)。
+
+合格範例 - 訂單頁面
+![Imgur](https://i.imgur.com/ncwd62a.png)
+
+合格範例 - 訂單頁面
+![Imgur](https://i.imgur.com/W3hu1V3.png)
+
+不合格範例 - 訂單頁面
+![Imgur](https://i.imgur.com/y07FLLQ.png)
+
+不合格範例 - 結帳頁面
+![Imgur](https://i.imgur.com/UNVC5wl.png)
