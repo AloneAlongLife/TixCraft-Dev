@@ -22,7 +22,7 @@ Ticket Count :
     - 帳戶識別ID。
     - 取得方式:
        - 請於瀏覽器中登入`https://tixcraft.com/`。
-       - 登入後在瀏覽器上方的網址列，最右邊(視瀏覽器而有不同)有個鎖頭，將它點開。
+       - 登入後在瀏覽器上方的網址列，最左邊(視瀏覽器而有不同)有個鎖頭，將它點開。
        - 點開依序點選`Cookie > tixcraft.com > Cookie > SID`並將值保存下來。
      - 上次使用的SID會保存於資料夾中的`SID.txt`
  - Ticket Count
