@@ -28,7 +28,7 @@ def print_vcode(_sen: Session):
         out = tuple(map(longer, out))
         _p = "\n".join(map("|".join, zip(*out)))
         print(_p)
-        print("-" * 228)
+        print("-" * get_terminal_size().columns)
 
 PRINT_QUEUE: Queue = Queue()
 STARTED = False
