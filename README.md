@@ -16,6 +16,7 @@
 URL :
 SID :
 Ticket Count :
+售票時間 :
 ```
 填入說明:
  - URL
