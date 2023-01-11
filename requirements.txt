@@ -1,5 +1,6 @@
 beautifulsoup4
-requests
+aiohttp
+aiofiles
 orjson
 opencv-python
 pyinstaller
